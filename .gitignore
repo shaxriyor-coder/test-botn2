@@ -98,3 +98,6 @@ dmypy.json
 
 # Windows
 Thumbs.db
+
+
+.env
