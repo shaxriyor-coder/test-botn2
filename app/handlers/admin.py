@@ -10,7 +10,7 @@ from app.keyboards import (
 )
 from app.states import ChannelManagement, TestCreation, ExcelExport
 from app.states import TestManagement
-from app.states import AdminUserCreation
+from app.states import AdminUserCreation, AdminPromotion
 from app.utils import (
     get_unique_test_code, validate_answer_key, is_valid_class
 )
@@ -34,7 +34,7 @@ async def admin_panel(message: Message):
     await message.answer(
         "👨‍💼 <b>Admin Panel</b>\n\n"
         "Kerakli bo'limni tanlang:",
-        reply_markup=admin_panel_keyboard(),
+        reply_markup=admin_panel_keyboard(message.from_user.id),
         parse_mode="HTML"
     )
 
@@ -62,11 +62,82 @@ async def create_user_start(message: Message, state: FSMContext):
     await state.set_state(AdminUserCreation.waiting_for_phone)
 
 
+
+@router.message(F.text == "➕ Admin qo'shish")
+async def add_admin_start(message: Message, state: FSMContext):
+    if not config.is_admin(message.from_user.id):
+        await message.answer("❌ Sizda ruxsat yo‘q!")
+        return
+
+    await message.answer(
+        "👑 Yangi admin Telegram ID sini yuboring:\n\n"
+        "Masalan: 123456789",
+        reply_markup=cancel_keyboard()
+    )
+
+    await state.set_state(AdminPromotion.waiting_for_id)
+
+
+
+
+
+@router.message(AdminPromotion.waiting_for_id)
+async def add_admin_id(message: Message, state: FSMContext):
+    text = (message.text or "").strip()
+
+    # cancel
+    if text == "❌ Bekor qilish":
+        await message.answer(
+            "❌ Bekor qilindi!",
+            reply_markup=admin_panel_keyboard(message.from_user.id))
+        
+        await state.clear()
+        return
+
+    # check number
+    if not text.isdigit():
+        await message.answer("❌ Faqat raqam kiriting! Masalan: 123456789")
+        return
+
+    admin_id = int(text)
+
+    # already admin check
+    if config.is_admin(admin_id):
+        await message.answer("⚠️ Bu user allaqachon admin!")
+        return
+
+    # add admin
+    config.add_admin(admin_id)
+
+    await message.answer(
+        f"✅ Yangi admin qo‘shildi!\n\n🆔 ID: {admin_id}",
+        reply_markup=admin_panel_keyboard(message.from_user.id)
+    )
+
+    await state.clear()
+    
+    
+@router.message(F.text == "admin panel")
+async def admin_panel(message: Message):
+    if not config.is_admin(message.from_user.id):
+        await message.answer("❌ Siz admin emassiz!")
+        return
+
+    await message.answer(
+        "👑 Admin Panel",
+        reply_markup=admin_panel_keyboard(message.from_user.id)
+    )
+
+
+
+
+
+
 @router.message(AdminUserCreation.waiting_for_phone)
 async def create_user_phone(message: Message, state: FSMContext, db: Database):
     text = (message.text or "").strip()
     if _is_cancel(text):
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!",reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
 
@@ -96,7 +167,7 @@ async def create_user_phone(message: Message, state: FSMContext, db: Database):
 async def create_user_first_name(message: Message, state: FSMContext):
     text = (message.text or "").strip()
     if _is_cancel(text):
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
 
@@ -113,7 +184,7 @@ async def create_user_first_name(message: Message, state: FSMContext):
 async def create_user_last_name(message: Message, state: FSMContext):
     text = (message.text or "").strip()
     if _is_cancel(text):
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
 
@@ -130,7 +201,7 @@ async def create_user_last_name(message: Message, state: FSMContext):
 async def create_user_age(message: Message, state: FSMContext):
     text = (message.text or "").strip()
     if _is_cancel(text):
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
 
@@ -153,7 +224,7 @@ async def create_user_age(message: Message, state: FSMContext):
 async def create_user_class(message: Message, state: FSMContext):
     text = (message.text or "").strip()
     if _is_cancel(text):
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
 
@@ -170,7 +241,7 @@ async def create_user_class(message: Message, state: FSMContext):
 async def create_user_address(message: Message, state: FSMContext):
     text = (message.text or "").strip()
     if _is_cancel(text):
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
 
@@ -205,7 +276,7 @@ async def create_user_confirm(message: Message, state: FSMContext, db: Database)
     text = (message.text or "").strip()
 
     if text == "❌ Bekor qilish":
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
 
@@ -232,9 +303,9 @@ async def create_user_confirm(message: Message, state: FSMContext, db: Database)
             reply_markup=admin_panel_keyboard()
         )
     except ValueError as e:
-        await message.answer(f"❌ {str(e)}", reply_markup=admin_panel_keyboard())
+        await message.answer(f"❌ {str(e)}", reply_markup=admin_panel_keyboard(message.from_user.id))
     except Exception as e:
-        await message.answer(f"❌ Xatolik: {str(e)}", reply_markup=admin_panel_keyboard())
+        await message.answer(f"❌ Xatolik: {str(e)}", reply_markup=admin_panel_keyboard(message.from_user.id))
     finally:
         await state.clear()
 
@@ -309,7 +380,7 @@ async def process_add_channel(message: Message, state: FSMContext, bot: Bot, db:
         await message.answer(
             f"✅ Kanal muvaffaqiyatli qo'shildi!\n\n"
             f"📢 {username}",
-            reply_markup=admin_panel_keyboard()
+            reply_markup=admin_panel_keyboard(message.from_user.id)
         )
         await state.clear()
         
@@ -358,7 +429,7 @@ async def process_remove_channel(message: Message, state: FSMContext, db: Databa
         
         await message.answer(
             "✅ Kanal muvaffaqiyatli o'chirildi!",
-            reply_markup=admin_panel_keyboard()
+            reply_markup=admin_panel_keyboard(message.from_user.id)
         )
         await state.clear()
         
@@ -417,7 +488,7 @@ async def list_tests_menu(message: Message, db: Database):
 
     tests = await db.get_all_tests()
     if not tests:
-        await message.answer("📋 Hozircha testlar mavjud emas!", reply_markup=admin_panel_keyboard())
+        await message.answer("📋 Hozircha testlar mavjud emas!", reply_markup=admin_panel_keyboard(message.from_user.id))
         return
 
     text = "📋 <b>Barcha testlar:</b>\n\n"
@@ -454,7 +525,7 @@ async def delete_test_callback(callback: CallbackQuery, db: Database):
 @router.callback_query(F.data == "admin_back")
 async def admin_back_callback(callback: CallbackQuery):
     is_admin_user = config.is_admin(callback.from_user.id)
-    await callback.message.edit_text("👨‍💼 Admin Panel\n\nKerakli bo'limni tanlang:", reply_markup=admin_panel_keyboard())
+    await callback.message.edit_text("👨‍💼 Admin Panel\n\nKerakli bo'limni tanlang:", reply_markup=admin_panel_keyboard(callback.from_user.id))
     await callback.answer()
 
 
@@ -482,7 +553,7 @@ async def create_test_start(message: Message, state: FSMContext):
 async def process_test_content(message: Message, state: FSMContext):
     """Test kontentini qabul qilish"""
     if message.text == "❌ Bekor qilish":
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
 
@@ -524,7 +595,7 @@ async def process_test_content(message: Message, state: FSMContext):
 async def process_answer_key(message: Message, state: FSMContext):
     """Javob kalitini qabul qilish"""
     if message.text == "❌ Bekor qilish":
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
     
@@ -569,7 +640,7 @@ async def process_answer_key(message: Message, state: FSMContext):
 @router.message(TestCreation.waiting_for_question_count)
 async def process_question_count(message: Message, state: FSMContext):
     if message.text == "❌ Bekor qilish":
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
 
@@ -600,7 +671,7 @@ async def process_question_count(message: Message, state: FSMContext):
 async def process_points(message: Message, state: FSMContext, bot: Bot, db: Database):
     """Ballni qabul qilish va testni yaratish"""
     if message.text == "❌ Bekor qilish":
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
     
@@ -642,7 +713,7 @@ async def process_points(message: Message, state: FSMContext, bot: Bot, db: Data
         
         await message.answer(
             result_text,
-            reply_markup=admin_panel_keyboard(),
+            reply_markup=admin_panel_keyboard(message.from_user.id),
             parse_mode="HTML"
         )
         await state.clear()
@@ -662,7 +733,7 @@ async def export_results_start(message: Message, state: FSMContext, db: Database
     if not tests:
         await message.answer(
             "❌ Hali testlar mavjud emas!",
-            reply_markup=admin_panel_keyboard()
+            reply_markup=admin_panel_keyboard(message.from_user.id)
         )
         return
     
@@ -683,7 +754,7 @@ async def export_results_start(message: Message, state: FSMContext, db: Database
 @router.message(ExcelExport.waiting_for_test_code)
 async def process_export_code(message: Message, state: FSMContext, db: Database):
     if message.text == "❌ Bekor qilish":
-        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard())
+        await message.answer("❌ Bekor qilindi!", reply_markup=admin_panel_keyboard(message.from_user.id))
         await state.clear()
         return
     
@@ -700,7 +771,7 @@ async def process_export_code(message: Message, state: FSMContext, db: Database)
     if not results:
         await message.answer(
             "❌ Bu test uchun hali natijalar yo'q!",
-            reply_markup=admin_panel_keyboard()
+            reply_markup=admin_panel_keyboard(message.from_user.id)
         )
         await state.clear()
         return
@@ -720,6 +791,6 @@ async def process_export_code(message: Message, state: FSMContext, db: Database)
     
     await message.answer(
         "✅ Excel fayl yuborildi!",
-        reply_markup=admin_panel_keyboard()
+        reply_markup=admin_panel_keyboard(message.from_user.id)
     )
     await state.clear()

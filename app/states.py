@@ -1,5 +1,8 @@
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.state import StatesGroup, State
 
+class AdminPromotion(StatesGroup):
+    waiting_for_id = State()
 
 class Registration(StatesGroup):
     waiting_for_contact = State()
@@ -52,3 +55,8 @@ class AdminUserCreation(StatesGroup):
     waiting_for_class = State()
     waiting_for_address = State()
     waiting_for_confirm = State()
+
+
+class AdminPromotion(StatesGroup):
+    waiting_for_username = State()
+    waiting_for_id = State()

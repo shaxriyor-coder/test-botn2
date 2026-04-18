@@ -1,8 +1,11 @@
+from logging import config
+
 from aiogram.types import (
     ReplyKeyboardMarkup, KeyboardButton, 
     InlineKeyboardMarkup, InlineKeyboardButton
 )
 
+from app.config import config
 
 
 def main_menu_keyboard(is_admin: bool = False) -> ReplyKeyboardMarkup:
@@ -28,16 +31,20 @@ def about_inline_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="🔙 Orqaga", callback_data="back_to_menu")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
-def admin_panel_keyboard():
+def admin_panel_keyboard(user_id: int):
     keyboard = [
         [KeyboardButton(text="📣 Kanallar"), KeyboardButton(text="🧪 Test yaratish")],
         [KeyboardButton(text="🧾 Testlar")],
         [KeyboardButton(text="➕ Foydalanuvchi qo'shish")],
-        [KeyboardButton(text="📊 Natijalarni yuklab olish")],
-        [KeyboardButton(text="🔙 Orqaga")]
     ]
-    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
+    if config.is_admin(user_id):
+        keyboard.append([KeyboardButton(text="➕ Admin qo'shish")])
+        keyboard.append([KeyboardButton(text="📊 Natijalarni yuklab olish")])
+
+    keyboard.append([KeyboardButton(text="🔙 Orqaga")])
+
+    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
 def tests_management_keyboard():
     keyboard = [
