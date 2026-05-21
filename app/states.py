@@ -9,7 +9,7 @@ class Registration(StatesGroup):
     waiting_for_name = State()
     waiting_for_class = State()
 
-
+#practice
 class ProfileEdit(StatesGroup):
     waiting_for_name = State()
     waiting_for_class = State()
@@ -60,3 +60,7 @@ class AdminUserCreation(StatesGroup):
 class AdminPromotion(StatesGroup):
     waiting_for_username = State()
     waiting_for_id = State()
+#practice
+#practice
+#practice
+#practice

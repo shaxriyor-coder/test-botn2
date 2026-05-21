@@ -9,6 +9,8 @@ from app.db import Database
 
 logger = logging.getLogger(__name__)
 
+#practice
+#practice
 
 class DatabaseMiddleware(BaseMiddleware):
    
@@ -67,4 +69,6 @@ class UserRegistrationMiddleware(BaseMiddleware):
                 await db.create_user(user.id)
                 logger.info(f"New user registered: {user.id}")
         
-        return await handler(event, data)
+        return await handler(event, data)#practice
+#practice
+#practice
